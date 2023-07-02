@@ -181,8 +181,8 @@ class EmbedChain:
             n_results=5,
         )
         
-        content_list = [doc for doc in results["documents"]]
-        content = "".join(content_list)
+        content_list = [doc[0] for doc in results["documents"]]
+        content = "\n".join(content_list)
         return content
     
     def generate_prompt(self, input_query, context):
