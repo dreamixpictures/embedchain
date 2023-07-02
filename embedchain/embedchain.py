@@ -170,7 +170,7 @@ class EmbedChain:
         )
         return response["choices"][0]["message"]["content"]
     
-    def retrieve_from_database(self, input_query):
+    def retrieve_from_database(self, input_query, limit):
         """
         Queries the vector database based on the given input query.
         Gets relevant doc based on the query
@@ -180,10 +180,9 @@ class EmbedChain:
         """
         results = self.collection.query(
             query_texts=[input_query,],
-            n_results=5,
+            n_results=limit,
         )
-        content_list = [doc[0] for doc in results["documents"][0]]
-        content = "\n".join(content_list)
+        content = '\n'.join([doc for doc in results['documents'][0]])
         self.last_embedding = input_query
         self.last_context = content
         return content
@@ -215,7 +214,7 @@ class EmbedChain:
         answer = self.get_openai_answer(prompt)
         return answer
 
-    def query(self, input_query):
+    def query(self, input_query, limit = 5):
         """
         Queries the vector database based on the given input query.
         Gets relevant doc based on the query and then passes it to an
@@ -224,7 +223,7 @@ class EmbedChain:
         :param input_query: The query to use.
         :return: The answer to the query.
         """
-        context = self.retrieve_from_database(input_query)
+        context = self.retrieve_from_database(input_query, limit)
         prompt = self.generate_prompt(input_query, context)
         answer = self.get_answer_from_llm(prompt)
         return answer
