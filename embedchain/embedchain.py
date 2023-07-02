@@ -181,7 +181,7 @@ class EmbedChain:
             n_results=5,
         )
         
-        content_list = [doc[0] for doc in results["documents"]]
+        content_list = [doc[0] for doc in results["documents"][0]]
         content = "\n".join(content_list)
         return content
     
