@@ -26,7 +26,7 @@ DB_DIR = os.path.join(ABS_PATH, "db")
 
 
 class EmbedChain:
-    def __init__(self, db=None, model="gpt-3.5-turbo", max_tokens=1000):
+    def __init__(self, db=None, model="gpt-3.5-turbo"):
         """
          Initializes the EmbedChain instance, sets up a vector DB client and
         creates a collection.
@@ -36,7 +36,7 @@ class EmbedChain:
         if db is None:
             db = ChromaDB()
         self.model = model
-        self.max_tokens = max_tokens
+        self.max_tokens = 50
         self.db_client = db.client
         self.collection = db.collection
         self.user_asks = []
@@ -177,7 +177,7 @@ class EmbedChain:
         )
         return response["choices"][0]["message"]["content"]
     
-    def retrieve_from_database(self, input_query, limit):
+    def retrieve_from_database(self, input_query, max_chunks):
         """
         Queries the vector database based on the given input query.
         Gets relevant doc based on the query
@@ -187,7 +187,7 @@ class EmbedChain:
         """
         results = self.collection.query(
             query_texts=[input_query,],
-            n_results=limit,
+            n_results=max_chunks,
         )
         content = '\n'.join([doc for doc in results['documents'][0]])
         self.last_embedding = input_query
@@ -221,7 +221,7 @@ class EmbedChain:
         answer = self.get_openai_answer(prompt)
         return answer
 
-    def query(self, input_query, limit = 5):
+    def query(self, input_query, max_chunks = 5, max_tokens= 500):
         """
         Queries the vector database based on the given input query.
         Gets relevant doc based on the query and then passes it to an
@@ -230,7 +230,8 @@ class EmbedChain:
         :param input_query: The query to use.
         :return: The answer to the query.
         """
-        context = self.retrieve_from_database(input_query, limit)
+        self.max_tokens = max_tokens
+        context = self.retrieve_from_database(input_query, max_chunks)
         prompt = self.generate_prompt(input_query, context)
         answer = self.get_answer_from_llm(prompt)
         return answer
