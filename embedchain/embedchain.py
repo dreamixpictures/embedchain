@@ -38,6 +38,8 @@ class EmbedChain:
         self.db_client = db.client
         self.collection = db.collection
         self.user_asks = []
+        self.last_context = ""
+        self.last_embedding = None
 
     def _get_loader(self, data_type):
         """
@@ -180,9 +182,10 @@ class EmbedChain:
             query_texts=[input_query,],
             n_results=5,
         )
-        
         content_list = [doc[0] for doc in results["documents"][0]]
         content = "\n".join(content_list)
+        self.last_embedding = input_query
+        self.last_context = content
         return content
     
     def generate_prompt(self, input_query, context):
