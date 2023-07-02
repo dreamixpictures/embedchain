@@ -178,7 +178,7 @@ class EmbedChain:
         """
         result = self.collection.query(
             query_texts=[input_query,],
-            n_results=1,
+            n_results=5,
         )
         result_formatted = self._format_result(result)
         content = result_formatted[0][0].page_content
