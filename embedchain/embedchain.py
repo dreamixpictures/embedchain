@@ -176,12 +176,13 @@ class EmbedChain:
         :param input_query: The query to use.
         :return: The content of the document that matched your query.
         """
-        result = self.collection.query(
+        results = self.collection.query(
             query_texts=[input_query,],
             n_results=5,
         )
-        result_formatted = self._format_result(result)
-        content = result_formatted[0][0].page_content
+        
+        content_list = [doc for doc in results["documents"]]
+        content = "".join(content_list)
         return content
     
     def generate_prompt(self, input_query, context):
