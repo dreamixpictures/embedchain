@@ -26,7 +26,7 @@ DB_DIR = os.path.join(ABS_PATH, "db")
 
 
 class EmbedChain:
-    def __init__(self, db=None):
+    def __init__(self, db=None, model="gpt-3.5-turbo", max_tokens=1000):
         """
          Initializes the EmbedChain instance, sets up a vector DB client and
         creates a collection.
@@ -35,6 +35,8 @@ class EmbedChain:
         """
         if db is None:
             db = ChromaDB()
+        self.model = model
+        self.max_tokens = max_tokens
         self.db_client = db.client
         self.collection = db.collection
         self.user_asks = []
@@ -89,11 +91,13 @@ class EmbedChain:
 
         :param data_type: The type of the data to add.
         :param url: The URL where the data is located.
+
+        :return: The result and the numbers of chunks added
         """
         loader = self._get_loader(data_type)
         chunker = self._get_chunker(data_type)
         self.user_asks.append([data_type, url])
-        self.load_and_embed(loader, chunker, url)
+        return self.load_and_embed(loader, chunker, url)
 
     def add_local(self, data_type, content):
         """
@@ -103,11 +107,13 @@ class EmbedChain:
 
         :param data_type: The type of the data to add.
         :param content: The local data. Refer to the `README` for formatting.
+        
+        :return: The result and the numbers of chunks added
         """
         loader = self._get_loader(data_type)
         chunker = self._get_chunker(data_type)
         self.user_asks.append([data_type, content])
-        self.load_and_embed(loader, chunker, content)
+        return self.load_and_embed(loader, chunker, content)
 
     def load_and_embed(self, loader, chunker, url):
         """
@@ -116,6 +122,8 @@ class EmbedChain:
         :param loader: The loader to use to load the data.
         :param chunker: The chunker to use to chunk the data.
         :param url: The URL where the data is located.
+        
+        :return: The result and the numbers of chunks added
         """
         embeddings_data = chunker.create_chunks(loader, url)
         documents = embeddings_data["documents"]
@@ -133,8 +141,7 @@ class EmbedChain:
             data_dict = {id: value for id, value in data_dict.items() if id not in existing_ids}
 
             if not data_dict:
-                print(f"All data from {url} already exists in the database.")
-                return
+                return f"All data from {url} already exists in the database.", "Total chunks count: 0"
 
             ids = list(data_dict.keys())
             documents, metadatas = zip(*data_dict.values())
@@ -144,7 +151,7 @@ class EmbedChain:
             metadatas=metadatas,
             ids=ids
         )
-        print(f"Successfully saved {url}. Total chunks count: {self.collection.count()}")
+        return f"Successfully saved {url}.", f"Total chunks count: {self.collection.count()}"
 
     def _format_result(self, results):
         return [
@@ -162,10 +169,10 @@ class EmbedChain:
             "role": "user", "content": prompt
         })
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
+            model=self.model,
             messages=messages,
             temperature=0,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
             top_p=1,
         )
         return response["choices"][0]["message"]["content"]
